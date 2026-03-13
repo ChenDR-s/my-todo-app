@@ -1,6 +1,17 @@
 # 待办事项管理器 - Todo Manager
 
+![GitHub](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.8%2B-blue)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+![Status](https://img.shields.io/badge/status-stable-green)
+
 一个简单的多平台待办事项管理工具，提供桌面应用和网页版。
+
+## 📋 项目状态
+- **版本**: v1.0.0
+- **状态**: 稳定可用
+- **最后更新**: 2026-03-13
+- **GitHub**: [sephiroth8500-byte/todo-manager](https://github.com/sephiroth8500-byte/todo-manager)
 
 ## ✨ 功能特性
 
