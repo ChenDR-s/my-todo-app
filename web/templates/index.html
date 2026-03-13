@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>待办事项管理器 - 网页版</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .board {
+            display: flex;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .column {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            max-height: 70vh;
+        }
+        
+        .column-header {
+            padding: 20px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border-bottom: 2px solid #eee;
+        }
+        
+        .todo .column-header {
+            background-color: #fff3e0;
+            color: #e65100;
+            border-bottom-color: #ff9800;
+        }
+        
+        .in_progress .column-header {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-bottom-color: #2196f3;
+        }
+        
+        .done .column-header {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-bottom-color: #4caf50;
+        }
+        
+        .column-count {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.1);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+        
+        .cards-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+        
+        .card {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-color: #bbb;
+        }
+        
+        .card-content {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+        
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .card-id {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .card-tags {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        
+        .tag {
+            background: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            color: #555;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-style: italic;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .status-todo { background-color: #ff9800; }
+        .status-in_progress { background-color: #2196f3; }
+        .status-done { background-color: #4caf50; }
+        
+        .refresh-info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            color: #666;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .connection-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .connected {
+            background-color: #4caf50;
+            color: white;
+        }
+        
+        .disconnected {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        /* 平板设备 (768px - 1024px) */
+        @media (max-width: 1024px) and (min-width: 768px) {
+            .board {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .column {
+                min-width: calc(50% - 10px);
+                max-width: calc(50% - 10px);
+            }
+            
+            .column:last-child {
+                min-width: 100%;
+                max-width: 100%;
+            }
+            
+            .stats {
+                gap: 15px;
+            }
+            
+            .stat-item {
+                min-width: 100px;
+                padding: 10px 15px;
+            }
+            
+            .stat-value {
+                font-size: 1.8rem;
+            }
+        }
+        
+        /* 手机设备 (< 768px) */
+        @media (max-width: 767px) {
+            body {
+                padding: 10px;
+            }
+            
+            header {
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 8px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .stats {
+                gap: 10px;
+                margin-top: 15px;
+            }
+            
+            .stat-item {
+                min-width: 80px;
+                padding: 8px 12px;
+                flex: 1;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .stat-label {
+                font-size: 0.8rem;
+            }
+            
+            .board {
+                flex-direction: column;
+                gap: 15px;
+                margin-top: 20px;
+            }
+            
+            .column {
+                min-width: 100%;
+                max-height: 60vh;
+            }
+            
+            .column-header {
+                padding: 15px;
+                font-size: 1.2rem;
+            }
+            
+            .cards-container {
+                padding: 10px;
+            }
+            
+            .card {
+                padding: 12px;
+                margin-bottom: 10px;
+            }
+            
+            .card-content {
+                font-size: 0.95rem;
+            }
+            
+            .card-meta {
+                font-size: 0.8rem;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .refresh-info {
+                padding: 12px;
+                font-size: 0.85rem;
+                margin-top: 15px;
+            }
+            
+            .connection-status {
+                bottom: 10px;
+                right: 10px;
+                left: 10px;
+                text-align: center;
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .last-updated {
+                font-size: 0.75rem;
+                margin-top: 15px;
+            }
+        }
+        
+        /* 超小屏幕 (< 480px) */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            .stats {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                justify-content: flex-start;
+                padding-bottom: 5px;
+            }
+            
+            .stat-item {
+                flex: 0 0 auto;
+                min-width: 70px;
+            }
+            
+            .column-header {
+                font-size: 1.1rem;
+                padding: 12px;
+            }
+            
+            .card {
+                padding: 10px;
+            }
+        }
+        
+        /* 触摸设备优化 */
+        @media (hover: none) and (pointer: coarse) {
+            .card {
+                min-height: 60px;
+            }
+            
+            .card:hover {
+                transform: none;
+            }
+            
+            .card:active {
+                background-color: #f8f8f8;
+                transform: scale(0.98);
+            }
+            
+            button, .connection-status {
+                min-height: 44px; /* 苹果推荐的最小触摸目标尺寸 */
+            }
+        }
+        
+        .last-updated {
+            font-size: 0.8rem;
+            color: #888;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 待办事项管理器</h1>
+            <p class="subtitle">网页版 - 实时查看任务状态</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="total-tasks">0</span>
+                    <span class="stat-label">总任务数</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="todo-tasks">0</span>
+                    <span class="stat-label">待办事项</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="progress-tasks">0</span>
+                    <span class="stat-label">进行中</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="done-tasks">0</span>
+                    <span class="stat-label">已完成</span>
+                </div>
+            </div>
+        </header>
+        
+        <div class="refresh-info">
+            <p>🔄 数据自动刷新（每10秒）| 📱 网页版为只读，修改任务请在桌面应用中操作</p>
+        </div>
+        
+        <div class="board">
+            <!-- 待办事项列 -->
+            <div class="column todo">
+                <div class="column-header">
+                    <span class="status-indicator status-todo"></span>
+                    待办事项
+                    <span class="column-count" id="todo-count">0</span>
+                </div>
+                <div class="cards-container" id="todo-cards">
+                    <!-- 任务卡片将通过JavaScript动态添加 -->
+                    <div class="empty-state">暂无待办任务</div>
+                </div>
+            </div>
+            
+            <!-- 进行中列 -->
+            <div class="column in_progress">
+                <div class="column-header">
+                    <span class="status-indicator status-in_progress"></span>
+                    进行中
+                    <span class="column-count" id="progress-count">0</span>
+                </div>
+                <div class="cards-container" id="progress-cards">
+                    <div class="empty-state">暂无进行中任务</div>
+                </div>
+            </div>
+            
+            <!-- 已完成列 -->
+            <div class="column done">
+                <div class="column-header">
+                    <span class="status-indicator status-done"></span>
+                    已完成
+                    <span class="column-count" id="done-count">0</span>
+                </div>
+                <div class="cards-container" id="done-cards">
+                    <div class="empty-state">暂无已完成任务</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="last-updated">
+            最后更新: <span id="last-updated-time">--:--:--</span>
+        </div>
+    </div>
+    
+    <div class="connection-status connected" id="connection-status">
+        ✅ 已连接到桌面应用
+    </div>
+    
+    <script>
+        // 配置
+        const REFRESH_INTERVAL = 10000; // 10秒刷新一次
+        const API_BASE_URL = window.location.origin; // 使用当前域名
+        
+        // DOM元素
+        const todoCardsContainer = document.getElementById('todo-cards');
+        const progressCardsContainer = document.getElementById('progress-cards');
+        const doneCardsContainer = document.getElementById('done-cards');
+        const connectionStatus = document.getElementById('connection-status');
+        const lastUpdatedTime = document.getElementById('last-updated-time');
+        
+        // 统计元素
+        const totalTasksEl = document.getElementById('total-tasks');
+        const todoTasksEl = document.getElementById('todo-tasks');
+        const progressTasksEl = document.getElementById('progress-tasks');
+        const doneTasksEl = document.getElementById('done-tasks');
+        const todoCountEl = document.getElementById('todo-count');
+        const progressCountEl = document.getElementById('progress-count');
+        const doneCountEl = document.getElementById('done-count');
+        
+        // 格式化日期时间
+        function formatDateTime(date) {
+            return date.toLocaleTimeString('zh-CN', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // 格式化日期
+        function formatDate(dateStr) {
+            if (!dateStr) return '未知';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('zh-CN');
+        }
+        
+        // 创建任务卡片
+        function createTaskCard(task) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.taskId = task.id;
+            
+            // 构建卡片内容
+            let tagsHtml = '';
+            if (task.tags && task.tags.length > 0) {
+                tagsHtml = `
+                    <div class="card-tags">
+                        ${task.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = `
+                <div class="card-content">${task.content}</div>
+                <div class="card-meta">
+                    <span class="card-id">#${task.id}</span>
+                    <span>创建: ${formatDate(task.created_at)}</span>
+                </div>
+                ${tagsHtml}
+            `;
+            
+            return card;
+        }
+        
+        // 清空所有卡片
+        function clearAllCards() {
+            [todoCardsContainer, progressCardsContainer, doneCardsContainer].forEach(container => {
+                // 保留空状态提示
+                const emptyState = container.querySelector('.empty-state');
+                container.innerHTML = '';
+                if (emptyState) {
+                    container.appendChild(emptyState);
+                }
+            });
+        }
+        
+        // 加载任务数据
+        async function loadTasks() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tasks`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    throw new Error(result.error || 'API请求失败');
+                }
+                
+                // 更新连接状态
+                connectionStatus.className = 'connection-status connected';
+                connectionStatus.textContent = '✅ 已连接到桌面应用';
+                connectionStatus.title = `最后更新: ${formatDateTime(new Date())}`;
+                
+                // 清空现有卡片
+                clearAllCards();
+                
+                // 按状态分组
+                const tasksByStatus = {
+                    'todo': [],
+                    'in_progress': [],
+                    'done': []
+                };
+                
+                // 处理每个任务
+                result.data.forEach(task => {
+                    if (tasksByStatus[task.status]) {
+                        tasksByStatus[task.status].push(task);
+                    }
+                });
+                
+                // 添加卡片到对应列
+                Object.entries(tasksByStatus).forEach(([status, tasks]) => {
+                    let container;
+                    switch(status) {
+                        case 'todo':
+                            container = todoCardsContainer;
+                            break;
+                        case 'in_progress':
+                            container = progressCardsContainer;
+                            break;
+                        case 'done':
+                            container = doneCardsContainer;
+                            break;
+                        default:
+                            return;
+                    }
+                    
+                    // 移除空状态提示
+                    const emptyState = container.querySelector('.empty-state');
+                    if (emptyState && tasks.length > 0) {
+                        emptyState.remove();
+                    }
+                    
+                    // 添加卡片
+                    tasks.forEach(task => {
+                        const card = createTaskCard(task);
+                        container.appendChild(card);
+                    });
+                    
+                    // 如果没有任务，显示空状态
+                    if (tasks.length === 0 && !container.querySelector('.empty-state')) {
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'empty-state';
+                        emptyDiv.textContent = status === 'todo' ? '暂无待办任务' : 
+                                            status === 'in_progress' ? '暂无进行中任务' : 
+                                            '暂无已完成任务';
+                        container.appendChild(emptyDiv);
+                    }
+                });
+                
+                // 更新统计信息
+                updateStats(tasksByStatus);
+                
+                // 更新最后更新时间
+                lastUpdatedTime.textContent = formatDateTime(new Date());
+                
+                return true;
+                
+            } catch (error) {
+                console.error('加载任务失败:', error);
+                
+                // 更新连接状态
+                connectionStatus.className = 'connection-status disconnected';
+                connectionStatus.textContent = '❌ 连接失败 - 请确保桌面应用正在运行';
+                connectionStatus.title = `错误: ${error.message}`;
+                
+                // 显示错误信息
+                clearAllCards();
+                
+                [todoCardsContainer, progressCardsContainer, doneCardsContainer].forEach(container => {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'empty-state';
+                    errorDiv.innerHTML = `
+                        <p>无法连接到桌面应用</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px; color: #f44336;">
+                            请确保:<br>
+                            1. 桌面应用正在运行<br>
+                            2. 访问地址: <code>${API_BASE_URL}</code>
+                        </p>
+                    `;
+                    container.appendChild(errorDiv);
+                });
+                
+                return false;
+            }
+        }
+        
+        // 更新统计信息
+        function updateStats(tasksByStatus) {
+            const todoCount = tasksByStatus.todo.length;
+            const progressCount = tasksByStatus.in_progress.length;
+            const doneCount = tasksByStatus.done.length;
+            const totalCount = todoCount + progressCount + doneCount;
+            
+            // 更新总统计
+            totalTasksEl.textContent = totalCount;
+            todoTasksEl.textContent = todoCount;
+            progressTasksEl.textContent = progressCount;
+            doneTasksEl.textContent = doneCount;
+            
+            // 更新列统计
+            todoCountEl.textContent = todoCount;
+            progressCountEl.textContent = progressCount;
+            doneCountEl.textContent = doneCount;
+        }
+        
+        // 移动端下拉刷新
+        let touchStartY = 0;
+        let touchEndY = 0;
+        
+        function handleTouchStart(e) {
+            touchStartY = e.touches[0].clientY;
+        }
+        
+        function handleTouchMove(e) {
+            if (window.scrollY === 0) {
+                e.preventDefault();
+            }
+        }
+        
+        function handleTouchEnd(e) {
+            touchEndY = e.changedTouches[0].clientY;
+            
+            // 如果向下滑动超过100px且在页面顶部，触发刷新
+            if (touchStartY - touchEndY > 100 && window.scrollY === 0) {
+                loadTasks();
+                showRefreshFeedback();
+            }
+        }
+        
+        // 显示刷新反馈
+        function showRefreshFeedback() {
+            const feedback = document.createElement('div');
+            feedback.className = 'refresh-feedback';
+            feedback.textContent = '正在刷新...';
+            feedback.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: #4caf50;
+                color: white;
+                text-align: center;
+                padding: 10px;
+                z-index: 2000;
+                animation: slideDown 0.3s ease;
+            `;
+            
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => {
+                feedback.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => feedback.remove(), 300);
+            }, 1500);
+        }
+        
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateY(-100%); }
+                to { transform: translateY(0); }
+            }
+            @keyframes slideUp {
+                from { transform: translateY(0); }
+                to { transform: translateY(-100%); }
+            }
+            .refresh-feedback {
+                font-size: 0.9rem;
+                font-weight: bold;
+            }
+        `;
+        
+        // 检测移动端
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+        
+        // 移动端优化：卡片长按菜单
+        function setupCardLongPress() {
+            let longPressTimer;
+            
+            document.addEventListener('touchstart', (e) => {
+                const card = e.target.closest('.card');
+                if (card) {
+                    longPressTimer = setTimeout(() => {
+                        showCardMenu(card, e.touches[0].clientX, e.touches[0].clientY);
+                    }, 800); // 800ms长按
+                }
+            }, { passive: true });
+            
+            document.addEventListener('touchend', () => {
+                clearTimeout(longPressTimer);
+            });
+            
+            document.addEventListener('touchmove', () => {
+                clearTimeout(longPressTimer);
+            });
+        }
+        
+        // 显示卡片菜单
+        function showCardMenu(card, x, y) {
+            const taskId = card.dataset.taskId;
+            const menu = document.createElement('div');
+            menu.className = 'card-menu';
+            menu.style.cssText = `
+                position: fixed;
+                left: ${x}px;
+                top: ${y}px;
+                background: white;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 1001;
+                min-width: 150px;
+                transform: translate(-50%, -100%);
+            `;
+            
+            menu.innerHTML = `
+                <div class="menu-item" data-action="copy">📋 复制内容</div>
+                <div class="menu-item" data-action="share">📤 分享</div>
+                <div class="menu-divider"></div>
+                <div class="menu-item" data-action="close">❌ 关闭</div>
+            `;
+            
+            // 添加样式
+            const menuStyle = document.createElement('style');
+            menuStyle.textContent = `
+                .menu-item {
+                    padding: 12px 16px;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    transition: background 0.2s;
+                }
+                .menu-item:hover {
+                    background: #f5f5f5;
+                }
+                .menu-divider {
+                    height: 1px;
+                    background: #eee;
+                    margin: 4px 0;
+                }
+            `;
+            
+            document.head.appendChild(menuStyle);
+            document.body.appendChild(menu);
+            
+            // 点击菜单项
+            menu.addEventListener('click', (e) => {
+                const action = e.target.dataset.action;
+                if (action === 'copy') {
+                    const content = card.querySelector('.card-content').textContent;
+                    navigator.clipboard.writeText(content).then(() => {
+                        alert('已复制到剪贴板');
+                    });
+                } else if (action === 'share') {
+                    if (navigator.share) {
+                        navigator.share({
+                            title: '待办事项',
+                            text: card.querySelector('.card-content').textContent,
+                            url: window.location.href
+                        });
+                    } else {
+                        alert('分享功能需要现代浏览器支持');
+                    }
+                }
+                menu.remove();
+                menuStyle.remove();
+            });
+            
+            // 点击其他地方关闭菜单
+            setTimeout(() => {
+                const closeMenu = (e) => {
+                    if (!menu.contains(e.target)) {
+                        menu.remove();
+                        menuStyle.remove();
+                        document.removeEventListener('click', closeMenu);
+                        document.removeEventListener('touchstart', closeMenu);
+                    }
+                };
+                document.addEventListener('click', closeMenu);
+                document.addEventListener('touchstart', closeMenu);
+            }, 100);
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            // 初始加载
+            loadTasks();
+            
+            // 设置定时刷新
+            setInterval(loadTasks, REFRESH_INTERVAL);
+            
+            // 添加手动刷新按钮（按F5刷新）
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'F5') {
+                    e.preventDefault();
+                    loadTasks();
+                }
+            });
+            
+            // 点击连接状态可以手动刷新
+            connectionStatus.addEventListener('click', () => {
+                loadTasks();
+            });
+            
+            // 移动端特定功能
+            if (isMobileDevice()) {
+                // 添加下拉刷新
+                document.addEventListener('touchstart', handleTouchStart, { passive: true });
+                document.addEventListener('touchmove', handleTouchMove, { passive: false });
+                document.addEventListener('touchend', handleTouchEnd, { passive: true });
+                
+                // 添加卡片长按菜单
+                setupCardLongPress();
+                
+                // 添加CSS动画
+                document.head.appendChild(style);
+                
+                // 优化滚动性能
+                document.querySelectorAll('.cards-container').forEach(container => {
+                    container.style.webkitOverflowScrolling = 'touch';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

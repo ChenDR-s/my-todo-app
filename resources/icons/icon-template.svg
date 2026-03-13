@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+    <!-- 背景圆形 -->
+    <circle cx="256" cy="256" r="240" fill="#2196f3" stroke="#1976d2" stroke-width="8"/>
+    
+    <!-- 勾选标记 -->
+    <path d="M 200 280 L 240 320 L 320 220" 
+          fill="none" 
+          stroke="white" 
+          stroke-width="30" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
+    
+    <!-- 待办列表轮廓 -->
+    <rect x="140" y="140" width="232" height="232" 
+          rx="20" ry="20" 
+          fill="none" 
+          stroke="white" 
+          stroke-width="12" 
+          opacity="0.3"/>
+    
+    <!-- 列表项1 -->
+    <line x1="180" y1="180" x2="220" y2="180" 
+          stroke="white" 
+          stroke-width="12" 
+          stroke-linecap="round"/>
+    
+    <!-- 列表项2 -->
+    <line x1="180" y1="220" x2="260" y2="220" 
+          stroke="white" 
+          stroke-width="12" 
+          stroke-linecap="round"/>
+    
+    <!-- 列表项3 -->
+    <line x1="180" y1="260" x2="240" y2="260" 
+          stroke="white" 
+          stroke-width="12" 
+          stroke-linecap="round"/>
+</svg>
